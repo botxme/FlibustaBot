@@ -8,28 +8,25 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/FlyInk13/FlibustaBot.git"
+    "url": "git+https://github.com/botxme/FlibustaBot.git"
   },
   "keywords": [
     "Flibusta",
     "bot",
     "vk",
-    "api",
-    "tor"
+    "api"
   ],
   "dependencies": {
     "VK-Promise": "^0.5.1",
-    "hipc": "*",
-    "templang": "*",
-    "tor-request": "*"
+    "templang": "*"
   },
   "devDependencies": {
     "pm2": "*"
   },
-  "author": "Flyink13",
+  "author": "VBiralo",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/FlyInk13/FlibustaBot/issues"
+    "url": "https://github.com/botxme/FlibustaBot/issues"
   },
-  "homepage": "https://github.com/FlyInk13/FlibustaBot#readme"
+  "homepage": "https://github.com/botxme/FlibustaBot#readme"
 }

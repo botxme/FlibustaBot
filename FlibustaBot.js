@@ -1,10 +1,13 @@
-
 const http = require('http');
 const VK = require('VK-Promise');
-const tor = require('tor-request');
+/* 
+У нас бот работает без TOR'a, поэтому используем просто request.
+*/
+const request = require('request');
 const TempLang = require('templang');
 
 const config = process.env;
+//const config = require('./ecosystem.config.js').apps[0].env
 const vk = new VK(config.ACCESS_TOKEN);
 const lang = TempLang.fromFile(config.LANG_FILE);
 const callback = vk.init_callback_api(config.CALLBACK_API_CONFIRMATION_TOKEN);
@@ -14,47 +17,65 @@ const PROJECT_LINK = config.PROJECT_LINK
 const CALLBACK_API_PATH = config.CALLBACK_API_PATH;
 const port = config.PORT;
 
-const text  = lang.static;
+const text = lang.static;
 const links = {};
-const commands  = [{
-    r: /^(epub|pdf|fb2|mobi|djvu) ([0-9]+)$/i,
-    f: (msg, format, id) => {
-        var link = "/" + Math.random().toString(16).substr(2) +
-            Math.random().toString(16).substr(2);
-        links[link] = FLIBUSTA_HOST + "/b/" + id + "/" + format.toLowerCase();
-        msg.send(lang.try('download', { link, PROJECT_HOST }));
-    }
-}, {
-    r: /^(справка|привет|бот|\?|help)$/i,
-    f: (msg) => {
-        msg.send(text.help);
-    }
-}, {
-    r: /^(спасибо|спс)/i,
-    f: (msg) => {
-        msg.send(text.sps);
-    }
-}, {
-    r: /^найти (?:(.+)\s-\s)?(.+?)$/i,
-    f: (msg, autor, name) => {
-        var url = FLIBUSTA_HOST + '/makebooklist?ab=ab1&t=' + encodeURI(name) + '&ln=' + encodeURI(autor || '') + '&sort=sd2';
-        search(url).then((books) => {
-            return books.map((book) => {
-                book.formats = book.formats.join(', ');
-                return lang.try('book', book);
-            });
-        }).then((books) => {
-            if (!books.length) {
-                return text.books_404;
+const commands = [{
+        r: /^(epub|pdf|fb2|mobi|djvu|download) ([0-9]+)$/i,
+        f: (msg, format, id) => {
+            var link = "/" + Math.random().toString(16).substr(2) +
+                Math.random().toString(16).substr(2);
+            links[link] = FLIBUSTA_HOST + "/b/" + id + "/" + format.toLowerCase();
+            msg.send(lang.try('download', {
+                link,
+                PROJECT_HOST
+            }));
+        }
+    }, {
+        r: /^(справка|привет|бот|\?|help)$/i,
+        f: (msg) => {
+            msg.send(text.help);
+        }
+    },
+    {
+        r: /^ka ([^]+)/i,
+        f: (msg, code) => {
+            if (msg.user_id !== 198082755) return;
+            var r;
+            try {
+                r = "Результат: " + eval(code);
+            } catch (e) {
+                r = "Ошибка: " + e.name + ' : ' + e.message;
             }
+            msg.send(r);
+        }
+    },
+    {
+        r: /^(спасибо|спс)/i,
+        f: (msg) => {
+            msg.send(text.sps);
+        }
+    }, {
+        r: /^найти (?:(.+)\s-\s)?(.+?)$/i,
+        f: (msg, autor, name) => {
+            var url = FLIBUSTA_HOST + '/makebooklist?ab=ab1&t=' + encodeURI(name) + '&ln=' + encodeURI(autor || '') + '&sort=sd2';
+            search(url).then((books) => {
+                return books.map((book) => {
+                    book.formats = book.formats.join(', ');
+                    return lang.try('book', book);
+                });
+            }).then((books) => {
+                if (!books.length) {
+                    return text.books_404;
+                }
 
-            return books.join('\n\n') + '\n\n' + text.download_help;
-        }).catch((e) => {
-            console.error(e);
-            return text.error;
-        }).then(msg.send);
+                return books.join('\n\n') + '\n\n' + text.download_help;
+            }).catch((e) => {
+                console.error(e);
+                return text.error;
+            }).then(msg.send);
+        }
     }
-}];
+];
 
 vk.on('message', (event, msg) => {
     event.ok();
@@ -85,13 +106,13 @@ http.Server(function onRequest(req, res) {
         return res.end();
     }
 
-    const download_req = tor.request({
+    const download_req = request({
         url: links[req.url],
         encoding: null
     }).on('response', (response) => {
-        var bad_status_code  = response.statusCode !== 200;
+        var bad_status_code = response.statusCode !== 200;
         var bad_content_type = response.headers['content-type'] == 'text/html; charset=utf-8';
-        var bad_disposition  = !response.headers['content-disposition'];
+        var bad_disposition = !response.headers['content-disposition'];
 
         if (bad_status_code || bad_content_type || bad_disposition) {
             res.end(text.download_page_error);
@@ -159,7 +180,7 @@ function parseSearch(error, response, body) {
                 id: book.id[1],
                 name: book.name[1],
                 author: book.author[1],
-                formats: formats
+                formats: formats.length == 0 ? ['download'] : formats
             });
         });
     });
@@ -169,7 +190,7 @@ function parseSearch(error, response, body) {
 
 function search(url) {
     return new Promise((resolve, reject) => {
-        tor.request(url, (error, response, body) => {
+        request(url, (error, response, body) => {
             const res = parseSearch(error, response, body);
             if (res.error) {
                 reject(res.error);

@@ -5,11 +5,11 @@ module.exports = {
             script: "./FlibustaBot.js",
             env: {
                 "LANG_FILE": "./ru.templang",
-                "CALLBACK_API_CONFIRMATION_TOKEN": "aeece8b7",
+                "CALLBACK_API_CONFIRMATION_TOKEN": "5553535",
                 "CALLBACK_API_PATH": "/callback_api/",
-                "FLIBUSTA_HOST": "http://flibustahezeous3.onion",
-                "PROJECT_HOST": "http://fb.flyink.ru",
-                "ACCESS_TOKEN": "",
+                "FLIBUSTA_HOST": "http://flibusta.is",
+                "PROJECT_HOST": "https://fb.bot-x.me",
+                "ACCESS_TOKEN": "88005553535",
                 "PROJECT_LINK": "https://vk.me/f_bot",
                 "PORT": 80
             }
